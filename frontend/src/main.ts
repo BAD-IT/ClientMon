@@ -32,24 +32,31 @@ function escapeHTML(str: string): string {
 };
 
 function render() {
+  const activeId = document.activeElement?.id;
+  const scrollY = window.scrollY;
+
   if (state.focusedPid !== null) {
     appDiv.innerHTML = renderFocusView();
     const fileSearchInput = document.getElementById('fileSearchInput') as HTMLInputElement;
     if (fileSearchInput) {
-      fileSearchInput.focus();
-      const len = fileSearchInput.value.length;
-      fileSearchInput.setSelectionRange(len, len);
+      if (activeId === 'fileSearchInput') {
+        fileSearchInput.focus({ preventScroll: true });
+        const len = fileSearchInput.value.length;
+        fileSearchInput.setSelectionRange(len, len);
+      }
       
       fileSearchInput.addEventListener('input', (e) => {
         state.fileFilterText = (e.target as HTMLInputElement).value;
         render();
       });
     }
+    window.scrollTo(0, scrollY);
     return;
   }
 
   if (state.focusedAlert !== null) {
     appDiv.innerHTML = renderAlertView();
+    window.scrollTo(0, scrollY);
     return;
   }
 
@@ -58,9 +65,11 @@ function render() {
   // Attach event listeners for Dashboard
   const searchInput = document.getElementById('searchInput') as HTMLInputElement;
   if (searchInput) {
-    searchInput.focus();
-    const len = searchInput.value.length;
-    searchInput.setSelectionRange(len, len);
+    if (activeId === 'searchInput') {
+      searchInput.focus({ preventScroll: true });
+      const len = searchInput.value.length;
+      searchInput.setSelectionRange(len, len);
+    }
     
     searchInput.addEventListener('input', (e) => {
       state.filterText = (e.target as HTMLInputElement).value;
@@ -75,6 +84,8 @@ function render() {
       render();
     });
   }
+  
+  window.scrollTo(0, scrollY);
 }
 
 // Global hooks for onclick events
