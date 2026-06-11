@@ -50,9 +50,7 @@ async def api_ignore_ip(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 async def api_whois(request):
-    ip_param = request.path_params['ip']
-    match = re.search(r"ip='([^']+)'", ip_param)
-    ip_to_lookup = match.group(1) if match else ip_param
+    ip_to_lookup = request.path_params['ip']
 
     try:
         req = urllib.request.Request(f"http://ipinfo.io/{ip_to_lookup}/json", headers={'User-Agent': 'curl/7.68.0'})

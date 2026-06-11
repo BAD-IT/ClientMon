@@ -7,6 +7,8 @@ class NetworkActivity:
     port: int
     status: str  # e.g., "ESTABLISHED", "LISTEN"
     protocol: str  # e.g., "TCP", "UDP"
+    dest_ip: Optional[str] = None
+    dest_port: Optional[int] = None
 
 @dataclass
 class FileAccess:

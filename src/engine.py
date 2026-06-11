@@ -3,6 +3,10 @@ import subprocess
 from typing import List, Optional
 from models import NetworkActivity, ProcessInfo, FileAccess
 
+def format_addr(addr) -> str:
+    if not addr: return ""
+    return f"{addr.ip}:{addr.port}"
+
 def get_all_processes() -> List[ProcessInfo]:
     processes = []
     
@@ -14,11 +18,18 @@ def get_all_processes() -> List[ProcessInfo]:
             if conn.pid is not None:
                 if conn.pid not in conn_map:
                     conn_map[conn.pid] = []
+                
+                dest_ip = conn.raddr.ip if conn.raddr else None
+                dest_port = conn.raddr.port if conn.raddr else None
+                remote_str = f"{format_addr(conn.laddr)} -> {format_addr(conn.raddr)}" if conn.raddr else f"{format_addr(conn.laddr)} (Listening)"
+                
                 conn_map[conn.pid].append(NetworkActivity(
-                    remote_address=f"{conn.laddr} -> {conn.raddr}" if conn.raddr else "Local/Listening",
-                    port=getattr(conn, 'port', 0), 
+                    remote_address=remote_str,
+                    port=conn.laddr.port if conn.laddr else 0, 
                     status=conn.status,
-                    protocol="TCP" if conn.type == 1 else "UDP"
+                    protocol="TCP" if conn.type == 1 else "UDP",
+                    dest_ip=dest_ip,
+                    dest_port=dest_port
                 ))
     except (psutil.AccessDenied, PermissionError):
         pass
@@ -54,11 +65,17 @@ def get_process_details(pid: int) -> Optional[ProcessInfo]:
         try:
             for conn in psutil.net_connections(kind='inet'):
                 if conn.pid == pid:
+                    dest_ip = conn.raddr.ip if conn.raddr else None
+                    dest_port = conn.raddr.port if conn.raddr else None
+                    remote_str = f"{format_addr(conn.laddr)} -> {format_addr(conn.raddr)}" if conn.raddr else f"{format_addr(conn.laddr)} (Listening)"
+                    
                     connections.append(NetworkActivity(
-                        remote_address=f"{conn.laddr} -> {conn.raddr}" if conn.raddr else "Local/Listening",
-                        port=getattr(conn, 'port', 0),
+                        remote_address=remote_str,
+                        port=conn.laddr.port if conn.laddr else 0,
                         status=conn.status,
-                        protocol="TCP" if conn.type == 1 else "UDP"
+                        protocol="TCP" if conn.type == 1 else "UDP",
+                        dest_ip=dest_ip,
+                        dest_port=dest_port
                     ))
         except (psutil.AccessDenied, PermissionError):
             pass
