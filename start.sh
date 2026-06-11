@@ -9,6 +9,7 @@ echo "======================================"
 # Start backend
 echo "[1/2] Starting Python Backend..."
 echo "      (Requires sudo to access system processes and file activity)"
+sudo -v
 sudo uv run main.py &
 BACKEND_PID=$!
 
@@ -23,6 +24,7 @@ cleanup() {
     echo ""
     echo "Shutting down ClientMon..."
     kill $FRONTEND_PID 2>/dev/null
+    sudo kill $BACKEND_PID 2>/dev/null
     exit 0
 }
 

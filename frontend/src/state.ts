@@ -7,7 +7,7 @@ class State {
   alerts: Alert[] = [];
   filterText: string = "";
   fileFilterText: string = "";
-  scopeFilter: string = "user_apps";
+  scopeFilter: "user_apps" | "all" | "alerts" = "user_apps";
   focusedPid: number | null = null;
   focusedDetails: ProcessDetails | null = null;
   focusedAlert: Alert | null = null;

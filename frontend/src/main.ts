@@ -71,7 +71,7 @@ function render() {
   const scopeSelect = document.getElementById('scopeFilter') as HTMLSelectElement;
   if (scopeSelect) {
     scopeSelect.addEventListener('change', (e) => {
-      state.scopeFilter = (e.target as HTMLSelectElement).value;
+      state.scopeFilter = (e.target as HTMLSelectElement).value as "user_apps" | "all" | "alerts";
       render();
     });
   }
