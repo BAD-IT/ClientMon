@@ -14,7 +14,12 @@ export function renderDashboard(): string {
   
   return `
     <header>
-      <h1>ClientMon Dashboard</h1>
+      <div style="display: flex; align-items: baseline; gap: 1rem;">
+        <h1>ClientMon Dashboard</h1>
+        <span style="color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+          ${filteredProcs.length} process${filteredProcs.length === 1 ? '' : 'es'}
+        </span>
+      </div>
       <div class="controls">
         <select id="scopeFilter">
           <option value="user_apps" ${state.scopeFilter === 'user_apps' ? 'selected' : ''}>User Apps</option>
@@ -26,8 +31,8 @@ export function renderDashboard(): string {
     
     ${state.alerts.length > 0 ? `
     <div class="alerts-container">
-      ${state.alerts.map(a => `
-        <div class="alert-card">
+      ${state.alerts.map((a, i) => `
+        <div class="alert-card" onclick="window.viewAlert(${i})" style="cursor: pointer;" title="Click to view analysis">
           <span style="font-size: 1.2rem;">⚠️</span>
           <div>
             <strong>${escapeHTML(a.severity.toUpperCase())} ALERT:</strong> ${escapeHTML(a.message)}

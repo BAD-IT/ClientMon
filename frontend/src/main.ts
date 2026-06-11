@@ -1,14 +1,31 @@
 import './style.css';
 import { state } from './state';
-import { setupWebSocket, fetchProcessDetails } from './api';
+import { setupWebSocket, fetchProcessDetails, fetchInitialProcesses } from './api';
 import { renderDashboard } from './components/Dashboard';
 import { renderFocusView } from './components/FocusView';
+import { renderAlertView } from './components/AlertView';
 
 const appDiv = document.querySelector<HTMLDivElement>('#app')!;
 
 function render() {
+  if (state.focusedAlert !== null) {
+    appDiv.innerHTML = renderAlertView();
+    return;
+  }
+
   if (state.focusedPid !== null) {
     appDiv.innerHTML = renderFocusView();
+    const fileSearchInput = document.getElementById('fileSearchInput') as HTMLInputElement;
+    if (fileSearchInput) {
+      fileSearchInput.focus();
+      const len = fileSearchInput.value.length;
+      fileSearchInput.setSelectionRange(len, len);
+      
+      fileSearchInput.addEventListener('input', (e) => {
+        state.fileFilterText = (e.target as HTMLInputElement).value;
+        render();
+      });
+    }
     return;
   }
 
@@ -57,6 +74,16 @@ function render() {
   render();
 };
 
+(window as any).viewAlert = (index: number) => {
+  state.focusedAlert = state.alerts[index];
+  render();
+};
+
+(window as any).closeAlert = () => {
+  state.focusedAlert = null;
+  render();
+};
+
 // Subscribe to state changes
 state.subscribe(() => {
   render();
@@ -64,4 +91,5 @@ state.subscribe(() => {
 
 // Initialization
 setupWebSocket();
+fetchInitialProcesses();
 render();
