@@ -13,7 +13,7 @@ from starlette.routing import Route, WebSocketRoute
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-from routes import api_get_processes, api_get_process, websocket_endpoint
+from routes import api_get_processes, api_get_process, api_ignore_ip, api_whois, websocket_endpoint
 from tasks import background_monitor
 
 async def startup_event():
@@ -22,6 +22,8 @@ async def startup_event():
 routes = [
     Route("/api/processes", api_get_processes),
     Route("/api/process/{pid:int}", api_get_process),
+    Route("/api/ignore_ip", api_ignore_ip, methods=["POST"]),
+    Route("/api/whois/{ip:path}", api_whois),
     WebSocketRoute("/ws", websocket_endpoint),
 ]
 

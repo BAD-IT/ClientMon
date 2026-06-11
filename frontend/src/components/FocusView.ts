@@ -34,12 +34,14 @@ export function renderFocusView(): string {
           <h3 style="margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--panel-border);">Network Connections (${focusedDetails.network_activities?.length || 0})</h3>
           ${focusedDetails.network_activities?.length ? `
             <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-              ${focusedDetails.network_activities.map(n => `
-                <li style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              ${focusedDetails.network_activities.map(n => {
+                const isHighlighted = state.highlightIp && n.remote_address.includes(state.highlightIp);
+                return `
+                <li style="background: ${isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)'}; border: ${isHighlighted ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent'}; padding: 0.75rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isHighlighted ? '0 0 10px rgba(59, 130, 246, 0.2)' : 'none'};">
                   <span><strong>${escapeHTML(n.protocol)}</strong>: ${escapeHTML(n.remote_address)}</span>
                   <span class="stat-badge">${escapeHTML(n.status)}</span>
                 </li>
-              `).join('')}
+              `}).join('')}
             </ul>
           ` : '<p style="color: var(--text-muted);">No network activity detected.</p>'}
           
