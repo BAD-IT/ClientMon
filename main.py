@@ -3,12 +3,16 @@
 #   "starlette==0.41.3",
 #   "uvicorn==0.32.1",
 #   "websockets==14.1",
-#   "psutil==6.1.0"
+#   "psutil==6.1.0",
+#   "python-dotenv==1.0.1"
 # ]
 # ///
 import os
 import asyncio
+from dotenv import load_dotenv
 from starlette.applications import Starlette
+
+load_dotenv()
 from starlette.routing import Route, WebSocketRoute
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware

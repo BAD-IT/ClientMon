@@ -42,7 +42,30 @@ async def background_monitor():
                         known_ips.add(net.dest_ip)
                         alerts_to_process.append((p, net))
 
+            def sync_check_virustotal(ip: str) -> bool:
+                import os
+                import urllib.request
+                import json
+                
+                vt_key = os.environ.get("VT_API_KEY")
+                if not vt_key:
+                    return False
+                    
+                try:
+                    req = urllib.request.Request(
+                        f"https://www.virustotal.com/api/v3/ip_addresses/{ip}",
+                        headers={"x-apikey": vt_key}
+                    )
+                    with urllib.request.urlopen(req, timeout=5) as response:
+                        data = json.loads(response.read().decode())
+                        stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+                        return stats.get("malicious", 0) > 0
+                except Exception:
+                    return False
+
             async def resolve_and_format(p, net):
+                severity = "high"
+                
                 if net.dest_ip in ("127.0.0.1", "::1", "0.0.0.0"):
                     target_proc = None
                     for other_p in procs:
@@ -65,10 +88,15 @@ async def background_monitor():
                         alert_msg = f"Process {p.name} (PID: {p.pid}) connected to {hostname} ({net.dest_ip})"
                     except Exception:
                         alert_msg = f"Process {p.name} (PID: {p.pid}) connected to new IP: {net.dest_ip}"
+                        
+                    is_malicious = await loop.run_in_executor(None, sync_check_virustotal, net.dest_ip)
+                    if is_malicious:
+                        severity = "critical"
+                        alert_msg = f"[MALICIOUS IP DETECTED by VirusTotal] {alert_msg}"
 
                 return {
                     "type": "alert",
-                    "severity": "high",
+                    "severity": severity,
                     "message": alert_msg,
                     "pid": p.pid,
                     "process_name": p.name,
