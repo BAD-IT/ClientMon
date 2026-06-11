@@ -31,6 +31,43 @@ async def api_get_process(request):
         return JSONResponse(data)
     return JSONResponse({"error": "Process not found"}, status_code=404)
 
+import subprocess
+import re
+import socket
+
+async def api_ignore_ip(request):
+    try:
+        data = await request.json()
+        ip = data.get("ip")
+        if ip:
+            from engine import WHITELISTED_IPS
+            WHITELISTED_IPS.add(ip)
+            return JSONResponse({"status": "ok"})
+        return JSONResponse({"error": "No IP provided"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+async def api_whois(request):
+    ip_param = request.path_params['ip']
+    match = re.search(r"ip='([^']+)'", ip_param)
+    ip_to_lookup = match.group(1) if match else ip_param
+
+    try:
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip_to_lookup)
+            org = hostname
+        except socket.error:
+            out = subprocess.check_output(['whois', ip_to_lookup], stderr=subprocess.DEVNULL, text=True)
+            org = "Unknown Provider"
+            for line in out.split('\\n'):
+                lower = line.lower()
+                if lower.startswith("orgname:") or lower.startswith("org-name:") or lower.startswith("descr:"):
+                    org = line.split(':', 1)[1].strip()
+                    break
+        return JSONResponse({"ip": ip_to_lookup, "provider": org})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:

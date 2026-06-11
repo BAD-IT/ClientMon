@@ -34,8 +34,9 @@ async def background_monitor():
             
             for p in procs:
                 for net in p.network_activities:
+                    from engine import WHITELISTED_IPS
                     # Very simple alert logic: "New IP Detected"
-                    if net.remote_address != "Local/Listening" and net.remote_address not in known_ips:
+                    if net.remote_address != "Local/Listening" and net.remote_address not in known_ips and net.remote_address not in WHITELISTED_IPS:
                         known_ips.add(net.remote_address)
                         alerts.append({
                             "type": "alert",

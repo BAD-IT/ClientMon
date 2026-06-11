@@ -11,6 +11,7 @@ class State {
   focusedPid: number | null = null;
   focusedDetails: ProcessDetails | null = null;
   focusedAlert: Alert | null = null;
+  highlightIp: string | null = null;
   
   private listeners: Listener[] = [];
 

@@ -46,3 +46,16 @@ export async function fetchInitialProcesses() {
     console.error("Failed to load initial processes", e);
   }
 }
+
+export async function ignoreIp(ip: string) {
+  await fetch('http://127.0.0.1:8000/api/ignore_ip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip })
+  });
+}
+
+export async function fetchWhois(ip: string): Promise<{provider: string}> {
+  const res = await fetch(`http://127.0.0.1:8000/api/whois/${encodeURIComponent(ip)}`);
+  return res.json();
+}

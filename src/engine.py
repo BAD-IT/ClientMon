@@ -3,6 +3,8 @@ import subprocess
 from typing import List, Optional
 from models import NetworkActivity, ProcessInfo, FileAccess
 
+WHITELISTED_IPS = set()
+
 def get_all_processes() -> List[ProcessInfo]:
     processes = []
     
