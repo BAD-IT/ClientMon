@@ -32,6 +32,7 @@ async def background_monitor():
             
             await manager.broadcast(json.dumps({"type": "process_list", "data": summary}))
             
+            alerts_to_process = []
             for p in procs:
                 for net in p.network_activities:
                     from db import get_whitelisted_ips
@@ -39,33 +40,43 @@ async def background_monitor():
                     
                     if net.dest_ip and net.dest_ip not in known_ips and net.dest_ip not in whitelist:
                         known_ips.add(net.dest_ip)
-                        
-                        alert_msg = f"Process {p.name} (PID: {p.pid}) connected to new IP: {net.dest_ip}"
-                        
-                        # Identify local listener
-                        if net.dest_ip in ("127.0.0.1", "::1", "0.0.0.0"):
-                            target_proc = None
-                            for other_p in procs:
-                                if other_p.pid == p.pid: continue
-                                for other_net in other_p.network_activities:
-                                    if other_net.status == "LISTEN" and getattr(other_net, 'port', 0) == net.dest_port:
-                                        target_proc = other_p.name
-                                        break
-                                if target_proc: break
-                            
-                            if target_proc:
-                                alert_msg = f"Process {p.name} (PID: {p.pid}) connected to local process {target_proc} on port {net.dest_port}"
-                            else:
-                                alert_msg = f"Process {p.name} (PID: {p.pid}) connected to local port {net.dest_port} (Unknown process)"
+                        alerts_to_process.append((p, net))
 
-                        alerts.append({
-                            "type": "alert",
-                            "severity": "high",
-                            "message": alert_msg,
-                            "pid": p.pid,
-                            "process_name": p.name,
-                            "remote_ip": net.dest_ip
-                        })
+            async def resolve_and_format(p, net):
+                if net.dest_ip in ("127.0.0.1", "::1", "0.0.0.0"):
+                    target_proc = None
+                    for other_p in procs:
+                        if other_p.pid == p.pid: continue
+                        for other_net in other_p.network_activities:
+                            if other_net.status == "LISTEN" and getattr(other_net, 'port', 0) == net.dest_port:
+                                target_proc = other_p.name
+                                break
+                        if target_proc: break
+                    
+                    if target_proc:
+                        alert_msg = f"Process {p.name} (PID: {p.pid}) connected to local process {target_proc} on port {net.dest_port}"
+                    else:
+                        alert_msg = f"Process {p.name} (PID: {p.pid}) connected to local port {net.dest_port} (Unknown process)"
+                else:
+                    import socket
+                    loop = asyncio.get_running_loop()
+                    try:
+                        hostname, _, _ = await loop.run_in_executor(None, socket.gethostbyaddr, net.dest_ip)
+                        alert_msg = f"Process {p.name} (PID: {p.pid}) connected to {hostname} ({net.dest_ip})"
+                    except Exception:
+                        alert_msg = f"Process {p.name} (PID: {p.pid}) connected to new IP: {net.dest_ip}"
+
+                return {
+                    "type": "alert",
+                    "severity": "high",
+                    "message": alert_msg,
+                    "pid": p.pid,
+                    "process_name": p.name,
+                    "remote_ip": net.dest_ip
+                }
+
+            if alerts_to_process:
+                alerts = await asyncio.gather(*(resolve_and_format(p, net) for p, net in alerts_to_process))
             
             for alert in alerts:
                 await manager.broadcast(json.dumps(alert))
