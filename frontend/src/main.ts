@@ -15,6 +15,7 @@ function escapeHTML(str: string): string {
 
 (window as any).ignoreAlertIp = async (ip: string) => {
   await ignoreIp(ip);
+  state.alerts = state.alerts.filter(a => a.remote_ip !== ip);
   (window as any).closeAlert();
 };
 
