@@ -25,13 +25,13 @@ class State {
 
   setProcesses(procs: ProcessSummary[]) {
     this.processes = procs;
-    if (this.focusedPid === null) this.notify();
+    if (this.focusedPid === null && this.focusedAlert === null) this.notify();
   }
 
   addAlert(alert: Alert) {
     this.alerts.push(alert);
     if (this.alerts.length > 5) this.alerts.shift();
-    if (this.focusedPid === null) this.notify();
+    if (this.focusedPid === null && this.focusedAlert === null) this.notify();
   }
 }
 
