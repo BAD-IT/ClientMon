@@ -32,6 +32,16 @@ function escapeHTML(str: string): string {
   }
 };
 
+(window as any).traceIpFocus = async (ip: string) => {
+  state.setWhoisCache(ip, '<span style="color: var(--text-muted);">Tracing...</span>');
+  try {
+    const data = await fetchWhois(ip);
+    state.setWhoisCache(ip, `<strong>${escapeHTML(data.provider)}</strong> (${escapeHTML(data.city)}, ${escapeHTML(data.country)})`);
+  } catch (e) {
+    state.setWhoisCache(ip, '<span style="color: #f87171;">Lookup failed.</span>');
+  }
+};
+
 function render() {
   const activeId = document.activeElement?.id;
   const scrollY = window.scrollY;
