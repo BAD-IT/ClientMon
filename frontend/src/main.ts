@@ -99,7 +99,7 @@ function render() {
   await loadData();
   
   if ((window as any).focusInterval) clearInterval((window as any).focusInterval);
-  (window as any).focusInterval = setInterval(loadData, 5000);
+  (window as any).focusInterval = setInterval(loadData, 10000);
 };
 
 (window as any).closeDetails = () => {

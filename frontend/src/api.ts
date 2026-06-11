@@ -55,7 +55,7 @@ export async function ignoreIp(ip: string) {
   });
 }
 
-export async function fetchWhois(ip: string): Promise<{provider: string}> {
+export async function fetchWhois(ip: string): Promise<{provider: string, city: string, region: string, country: string}> {
   const res = await fetch(`http://127.0.0.1:8000/api/whois/${encodeURIComponent(ip)}`);
   return res.json();
 }

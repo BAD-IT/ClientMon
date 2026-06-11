@@ -15,8 +15,12 @@ from starlette.middleware.cors import CORSMiddleware
 
 from routes import api_get_processes, api_get_process, api_ignore_ip, api_whois, websocket_endpoint
 from tasks import background_monitor
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+from db import init_db
 
 async def startup_event():
+    init_db()
     asyncio.create_task(background_monitor())
 
 routes = [

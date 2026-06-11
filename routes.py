@@ -34,14 +34,16 @@ async def api_get_process(request):
 import subprocess
 import re
 import socket
+import urllib.request
+import json
 
 async def api_ignore_ip(request):
     try:
         data = await request.json()
         ip = data.get("ip")
         if ip:
-            from engine import WHITELISTED_IPS
-            WHITELISTED_IPS.add(ip)
+            from db import add_whitelisted_ip
+            add_whitelisted_ip(ip)
             return JSONResponse({"status": "ok"})
         return JSONResponse({"error": "No IP provided"}, status_code=400)
     except Exception as e:
@@ -53,18 +55,22 @@ async def api_whois(request):
     ip_to_lookup = match.group(1) if match else ip_param
 
     try:
-        try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip_to_lookup)
-            org = hostname
-        except socket.error:
-            out = subprocess.check_output(['whois', ip_to_lookup], stderr=subprocess.DEVNULL, text=True)
-            org = "Unknown Provider"
-            for line in out.split('\\n'):
-                lower = line.lower()
-                if lower.startswith("orgname:") or lower.startswith("org-name:") or lower.startswith("descr:"):
-                    org = line.split(':', 1)[1].strip()
-                    break
-        return JSONResponse({"ip": ip_to_lookup, "provider": org})
+        req = urllib.request.Request(f"http://ipinfo.io/{ip_to_lookup}/json", headers={'User-Agent': 'curl/7.68.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+        
+        provider = data.get("org", "Unknown Provider")
+        city = data.get("city", "Unknown City")
+        region = data.get("region", "")
+        country = data.get("country", "")
+        
+        return JSONResponse({
+            "ip": ip_to_lookup, 
+            "provider": provider,
+            "city": city,
+            "region": region,
+            "country": country
+        })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
