@@ -4,6 +4,10 @@ import { escapeHTML } from '../utils';
 export function renderDashboard(): string {
   const filteredProcs = state.processes.filter(p => {
     if (state.scopeFilter === "user_apps" && !p.is_user_app) return false;
+    if (state.scopeFilter === "alerts") {
+      const alertPids = new Set(state.alerts.map(a => a.pid));
+      if (!alertPids.has(p.pid)) return false;
+    }
     if (state.filterText) {
       const matchName = p.name.toLowerCase().includes(state.filterText.toLowerCase());
       const matchPid = p.pid.toString().includes(state.filterText);
@@ -24,6 +28,7 @@ export function renderDashboard(): string {
         <select id="scopeFilter">
           <option value="user_apps" ${state.scopeFilter === 'user_apps' ? 'selected' : ''}>User Apps</option>
           <option value="all" ${state.scopeFilter === 'all' ? 'selected' : ''}>All Processes</option>
+          <option value="alerts" ${state.scopeFilter === 'alerts' ? 'selected' : ''}>Alerts Only</option>
         </select>
         <input type="text" id="searchInput" placeholder="Search Name or PID..." value="${escapeHTML(state.filterText)}" />
       </div>
