@@ -33,13 +33,26 @@ export function renderFocusView(): string {
           
           <h3 style="margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--panel-border);">Network Connections (${focusedDetails.network_activities?.length || 0})</h3>
           ${focusedDetails.network_activities?.length ? `
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding: 0; margin: 0;">
               ${focusedDetails.network_activities.map(n => {
                 const isHighlighted = state.highlightIp && n.remote_address.includes(state.highlightIp);
+                const isExternal = n.dest_ip && !['127.0.0.1', '0.0.0.0', '::1'].includes(n.dest_ip);
+                const whoisResult = isExternal ? state.whoisCache[n.dest_ip!] : null;
+                
                 return `
-                <li style="background: ${isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)'}; border: ${isHighlighted ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent'}; padding: 0.75rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: ${isHighlighted ? '0 0 10px rgba(59, 130, 246, 0.2)' : 'none'};">
-                  <span><strong>${escapeHTML(n.protocol)}</strong>: ${escapeHTML(n.remote_address)}</span>
-                  <span class="stat-badge">${escapeHTML(n.status)}</span>
+                <li style="background: ${isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)'}; border: ${isHighlighted ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid transparent'}; padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: ${isHighlighted ? '0 0 10px rgba(59, 130, 246, 0.2)' : 'none'};">
+                  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span><strong>${escapeHTML(n.protocol)}</strong>: ${escapeHTML(n.remote_address)}</span>
+                    <span class="stat-badge">${escapeHTML(n.status)}</span>
+                  </div>
+                  ${isExternal ? `
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;">
+                      <a href="https://www.virustotal.com/gui/ip-address/${escapeHTML(n.dest_ip!)}" target="_blank" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; text-decoration: none; border: 1px solid rgba(59, 130, 246, 0.4); cursor: pointer; transition: background 0.2s;">VT Scan</a>
+                      <button onclick="window.traceIpFocus('${escapeHTML(n.dest_ip!)}')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.4); cursor: pointer; transition: background 0.2s;">WHOIS</button>
+                      <button onclick="window.ignoreAlertIp('${escapeHTML(n.dest_ip!)}')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); cursor: pointer; transition: background 0.2s;">Mark Safe</button>
+                    </div>
+                    ${whoisResult ? `<div style="font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 0.25rem;">${whoisResult}</div>` : ''}
+                  ` : ''}
                 </li>
               `}).join('')}
             </ul>

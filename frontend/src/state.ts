@@ -12,6 +12,7 @@ class State {
   focusedDetails: ProcessDetails | null = null;
   focusedAlert: Alert | null = null;
   highlightIp: string | null = null;
+  whoisCache: Record<string, string> = {};
   
   private listeners: Listener[] = [];
 
@@ -21,6 +22,11 @@ class State {
 
   notify() {
     this.listeners.forEach(l => l());
+  }
+
+  setWhoisCache(ip: string, info: string) {
+    this.whoisCache[ip] = info;
+    this.notify();
   }
 
   setProcesses(procs: ProcessSummary[]) {

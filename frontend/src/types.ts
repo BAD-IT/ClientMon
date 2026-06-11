@@ -12,6 +12,8 @@ export interface NetworkActivity {
   port: number;
   status: string;
   protocol: string;
+  dest_ip?: string;
+  dest_port?: number;
 }
 
 export interface FileAccess {
