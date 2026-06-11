@@ -9,6 +9,11 @@ class NetworkActivity:
     protocol: str  # e.g., "TCP", "UDP"
 
 @dataclass
+class FileAccess:
+    path: str
+    mode: str
+
+@dataclass
 class ProcessInfo:
     pid: int
     name: str
@@ -16,7 +21,7 @@ class ProcessInfo:
     cpu_percent: float
     memory_mb: float
     network_activities: List[NetworkActivity] = field(default_factory=list)
-    unique_file_paths: set = field(default_factory=set)
+    unique_file_paths: List[FileAccess] = field(default_factory=list)
 
     def to_summary(self):
         """Provides the 'not too long, not too short' summary view."""

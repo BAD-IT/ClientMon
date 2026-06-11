@@ -42,6 +42,31 @@ export function renderFocusView(): string {
               `).join('')}
             </ul>
           ` : '<p style="color: var(--text-muted);">No network activity detected.</p>'}
+          
+          ${(() => {
+            const fileFilter = state.fileFilterText.toLowerCase();
+            const allFiles = focusedDetails.unique_file_paths || [];
+            const filteredFiles = fileFilter ? allFiles.filter(f => f.path.toLowerCase().includes(fileFilter)) : allFiles;
+            
+            return `
+              <h3 style="margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--panel-border); display: flex; justify-content: space-between; align-items: baseline;">
+                <span>File Access (${filteredFiles.length} / ${allFiles.length})</span>
+                <input type="text" id="fileSearchInput" placeholder="Filter files..." value="${escapeHTML(state.fileFilterText)}" style="font-size: 0.9rem; padding: 0.3rem 0.6rem; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); color: var(--text-main);" />
+              </h3>
+              <div style="max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid var(--panel-border);">
+                ${filteredFiles.length ? `
+                  <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.25rem; padding: 0.5rem; margin: 0;">
+                    ${filteredFiles.map(f => `
+                      <li style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-size: 0.85rem;">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 1rem; direction: rtl; text-align: left;" title="${escapeHTML(f.path)}">&lrm;${escapeHTML(f.path)}</span>
+                        <span class="stat-badge" style="min-width: 3rem; text-align: center; flex-shrink: 0; ${f.mode === 'R' ? 'background: rgba(34, 197, 94, 0.2); color: #4ade80;' : f.mode === 'W' ? 'background: rgba(239, 68, 68, 0.2); color: #f87171;' : 'background: rgba(249, 115, 22, 0.2); color: #fb923c;'}">[${escapeHTML(f.mode)}]</span>
+                      </li>
+                    `).join('')}
+                  </ul>
+                ` : '<p style="color: var(--text-muted); padding: 1rem; text-align: center;">No files found.</p>'}
+              </div>
+            `;
+          })()}
         </div>
         `
       }

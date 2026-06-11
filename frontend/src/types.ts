@@ -14,10 +14,15 @@ export interface NetworkActivity {
   protocol: string;
 }
 
+export interface FileAccess {
+  path: string;
+  mode: string;
+}
+
 export interface ProcessDetails extends ProcessSummary {
   path: string;
   network_activities: NetworkActivity[];
-  unique_file_paths: string[];
+  unique_file_paths: FileAccess[];
   error?: string;
 }
 
@@ -25,4 +30,7 @@ export interface Alert {
   type: string;
   severity: string;
   message: string;
+  pid?: number;
+  process_name?: string;
+  remote_ip?: string;
 }

@@ -6,9 +6,11 @@ class State {
   processes: ProcessSummary[] = [];
   alerts: Alert[] = [];
   filterText: string = "";
+  fileFilterText: string = "";
   scopeFilter: string = "user_apps";
   focusedPid: number | null = null;
   focusedDetails: ProcessDetails | null = null;
+  focusedAlert: Alert | null = null;
   
   private listeners: Listener[] = [];
 

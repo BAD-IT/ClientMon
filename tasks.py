@@ -40,7 +40,10 @@ async def background_monitor():
                         alerts.append({
                             "type": "alert",
                             "severity": "high",
-                            "message": f"Process {p.name} (PID: {p.pid}) connected to new IP: {net.remote_address}"
+                            "message": f"Process {p.name} (PID: {p.pid}) connected to new IP: {net.remote_address}",
+                            "pid": p.pid,
+                            "process_name": p.name,
+                            "remote_ip": net.remote_address
                         })
             
             for alert in alerts:

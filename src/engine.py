@@ -1,6 +1,7 @@
 import psutil
+import subprocess
 from typing import List, Optional
-from models import NetworkActivity, ProcessInfo
+from models import NetworkActivity, ProcessInfo, FileAccess
 
 def get_all_processes() -> List[ProcessInfo]:
     processes = []
@@ -38,7 +39,7 @@ def get_all_processes() -> List[ProcessInfo]:
                 cpu_percent=p_info['cpu_percent'] or 0.0,
                 memory_mb=mem_mb,
                 network_activities=connections,
-                unique_file_paths=set()
+                unique_file_paths=[]
             ))
         except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
             continue
@@ -50,14 +51,51 @@ def get_process_details(pid: int) -> Optional[ProcessInfo]:
         mem_mb = proc.memory_info().rss / (1024 * 1024)
         
         connections = []
-        for conn in psutil.net_connections(kind='inet'):
-            if conn.pid == pid:
-                connections.append(NetworkActivity(
-                    remote_address=f"{conn.laddr} -> {conn.raddr}" if conn.raddr else "Local/Listening",
-                    port=getattr(conn, 'port', 0),
-                    status=conn.status,
-                    protocol="TCP" if conn.type == 1 else "UDP"
-                ))
+        try:
+            for conn in psutil.net_connections(kind='inet'):
+                if conn.pid == pid:
+                    connections.append(NetworkActivity(
+                        remote_address=f"{conn.laddr} -> {conn.raddr}" if conn.raddr else "Local/Listening",
+                        port=getattr(conn, 'port', 0),
+                        status=conn.status,
+                        protocol="TCP" if conn.type == 1 else "UDP"
+                    ))
+        except (psutil.AccessDenied, PermissionError):
+            pass
+                
+        unique_file_paths = []
+        try:
+            out = subprocess.check_output(['lsof', '-p', str(pid), '-F', 'fn'], stderr=subprocess.DEVNULL, text=True)
+            lines = out.split('\\n')
+            current_mode = "R"
+            
+            for line in lines:
+                if not line:
+                    continue
+                type_char = line[0]
+                val = line[1:]
+                
+                if type_char == 'f':
+                    if val.endswith('r'):
+                        current_mode = "R"
+                    elif val.endswith('w'):
+                        current_mode = "W"
+                    elif val.endswith('u'):
+                        current_mode = "R/W"
+                    else:
+                        current_mode = "R"
+                elif type_char == 'n':
+                    if val.startswith('/'):
+                        unique_file_paths.append(FileAccess(path=val, mode=current_mode))
+        except Exception:
+            pass
+            
+        seen = set()
+        deduped_files = []
+        for fa in unique_file_paths:
+            if fa.path not in seen:
+                seen.add(fa.path)
+                deduped_files.append(fa)
 
         return ProcessInfo(
             pid=pid, 
@@ -66,7 +104,7 @@ def get_process_details(pid: int) -> Optional[ProcessInfo]:
             cpu_percent=proc.cpu_percent(), 
             memory_mb=mem_mb,
             network_activities=connections,
-            unique_file_paths=set()
+            unique_file_paths=deduped_files
         )
     except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
         return None

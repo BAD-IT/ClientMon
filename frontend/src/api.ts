@@ -34,3 +34,15 @@ export async function fetchProcessDetails(pid: number): Promise<ProcessDetails> 
   }
   return res.json();
 }
+
+export async function fetchInitialProcesses() {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/processes");
+    if (res.ok) {
+      const data = await res.json();
+      state.setProcesses(data);
+    }
+  } catch (e) {
+    console.error("Failed to load initial processes", e);
+  }
+}
